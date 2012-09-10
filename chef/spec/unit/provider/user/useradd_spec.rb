@@ -56,8 +56,7 @@ describe Chef::Provider::User::Useradd do
       'comment' => "-c",
       'gid' => "-g",
       'uid' => "-u",
-      'shell' => "-s",
-      'password' => "-p"
+      'shell' => "-s"
     }
 
     field_list.each do |attribute, option|
@@ -102,14 +101,20 @@ describe Chef::Provider::User::Useradd do
       end
       
       it "should set useradd -p" do
-        @provider.universal_options.should =~ / -p 'hocus-pocus'/
+        @provider.password_option.should =~ / -p 'hocus-pocus'/
       end
 
-      it "should raise an exception if the platform is Solaris" do
-        @provider = Chef::Provider::User::Solaris.new(@new_resource, @run_context)
-        lambda {
-          @provider.universal_options
-        }.should raise_error(Chef::Exceptions::User, "Setting the password from the User resource is not supported on Solaris-based platforms.")
+      describe "and platform is Solaris" do
+        before do
+          @provider = Chef::Provider::User::Solaris.new(@new_resource, @run_context)
+          @provider.current_resource = @current_resource
+        end
+
+        it "should use its own shadow file writer to set the password" do
+          Chef::Provider::User::Solaris.any_instance.should_receive(:write_shadow_file).with("hocus-pocus")
+          @provider.stub!(:run_command).and_return(true)
+          @provider.manage_user
+        end
       end
     end
 
@@ -185,7 +190,7 @@ describe Chef::Provider::User::Useradd do
     end
 
     it "runs useradd with the computed command options" do
-      command = "useradd -c 'Adam Jacob' -g '23' -p 'abracadabra' -s '/usr/bin/zsh' -u '1000' -d '/Users/mud' -m adam"
+      command = "useradd -c 'Adam Jacob' -g '23' -s '/usr/bin/zsh' -u '1000' -d '/Users/mud' -p 'abracadabra' -m adam"
       @provider.should_receive(:run_command).with({ :command => command }).and_return(true)
       @provider.create_user
     end
@@ -199,7 +204,7 @@ describe Chef::Provider::User::Useradd do
       end
 
       it "should not include -d in the command options" do
-        command = "useradd -c 'Adam Jacob' -g '23' -p 'abracadabra' -s '/usr/bin/zsh' -u '1000' -r adam"
+        command = "useradd -c 'Adam Jacob' -g '23' -s '/usr/bin/zsh' -u '1000' -p 'abracadabra' -r adam"
         @provider.should_receive(:run_command).with({ :command => command }).and_return(true)
         @provider.create_user
       end
@@ -219,14 +224,7 @@ describe Chef::Provider::User::Useradd do
       before { @provider.new_resource.password 'hocus-pocus' }
 
       it "should set usermod -p" do
-        @provider.universal_options.should =~ / -p 'hocus-pocus'/
-      end
-      
-      it "should raise an exception if the platform is Solaris" do
-        @provider = Chef::Provider::User::Solaris.new(@new_resource, @run_context)
-        lambda {
-          @provider.universal_options
-        }.should raise_error(Chef::Exceptions::User, "Setting the password from the User resource is not supported on Solaris-based platforms.")
+        @provider.password_option.should =~ / -p 'hocus-pocus'/
       end
     end
     

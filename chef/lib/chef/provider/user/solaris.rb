@@ -1,6 +1,6 @@
 #
-# Author:: Stephen Nelson-Smith ( <sns@opscode.com> )
-# Author:: Jon Ramsey ( <jonathon.ramsey@gmail.com> )
+# Author:: Stephen Nelson-Smith (<sns@opscode.com>)
+# Author:: Jon Ramsey (<jonathon.ramsey@gmail.com>)
 # Copyright:: Copyright (c) 2012 Opscode, Inc.
 # License:: Apache License, Version 2.0
 #
@@ -19,12 +19,15 @@
 class Chef
   class Provider
     class User
-      class Solaris < Chef::Provider::User
-        def universal_options
+      class Solaris < Chef::Provider::User::Useradd
+        def password_option
           if @new_resource.password
-            raise Chef::Exceptions::User, "Setting the password from the User resource is not supported on Solaris-based platforms."
+            write_shadow_file(@new_resource.password)
+            ""
           end
-          super
+        end
+
+        def write_shadow_file(new_password)
         end
       end
     end

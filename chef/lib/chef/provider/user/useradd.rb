@@ -23,18 +23,22 @@ class Chef
   class Provider
     class User 
       class Useradd < Chef::Provider::User
-        UNIVERSAL_OPTIONS = [[:comment, "-c"], [:gid, "-g"], [:password, "-p"], [:shell, "-s"], [:uid, "-u"]]
+        UNIVERSAL_OPTIONS = [[:comment, "-c"], [:gid, "-g"], [:shell, "-s"], [:uid, "-u"]]
 
         def create_user
           command = compile_command("useradd") do |useradd|
             useradd << universal_options
+            useradd << password_option
             useradd << useradd_options
           end
           run_command(:command => command)
         end
         
         def manage_user
-          command = compile_command("usermod") { |u| u << universal_options }
+          command = compile_command("usermod") do |usermod|
+            usermod << universal_options
+            usermod << password_option
+          end
           command << " -m" if managing_home_dir?
           run_command(:command => command)
         end
@@ -98,12 +102,7 @@ class Chef
           opts = ''
           
           UNIVERSAL_OPTIONS.each do |field, option|
-            if @current_resource.send(field) != @new_resource.send(field)
-              if @new_resource.send(field)
-                Chef::Log.debug("#{@new_resource} setting #{field} to #{@new_resource.send(field)}")
-                opts << " #{option} '#{@new_resource.send(field)}'"
-              end
-            end
+            update_options(field, option, opts)
           end
           if updating_home?
             if managing_home_dir?
@@ -118,6 +117,21 @@ class Chef
           opts
         end
 
+        def password_option
+          opts = ''
+          update_options(:password, "-p", opts)
+          opts
+        end
+
+        def update_options(field, option, opts)
+          if @current_resource.send(field) != @new_resource.send(field)
+            if @new_resource.send(field)
+              Chef::Log.debug("#{@new_resource} setting #{field} to #{@new_resource.send(field)}")
+              opts << " #{option} '#{@new_resource.send(field)}'"
+            end
+          end
+        end
+        
         def useradd_options
           opts = ''
           opts << " -m" if updating_home? && managing_home_dir?
