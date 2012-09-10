@@ -96,6 +96,23 @@ describe Chef::Provider::User::Useradd do
       @provider.universal_options.should eql(match_string)
     end
 
+    describe "when we want to set a password" do
+      before do
+        @new_resource.password "hocus-pocus"
+      end
+      
+      it "should set useradd -p" do
+        @provider.universal_options.should =~ / -p 'hocus-pocus'/
+      end
+
+      it "should raise an exception if the platform is Solaris" do
+        @provider = Chef::Provider::User::Solaris.new(@new_resource, @run_context)
+        lambda {
+          @provider.universal_options
+        }.should raise_error(Chef::Exceptions::User, "Setting the password from the User resource is not supported on Solaris-based platforms.")
+      end
+    end
+
     describe "when we want to create a system user" do
       before do
         @new_resource.manage_home(true)
@@ -198,6 +215,21 @@ describe Chef::Provider::User::Useradd do
       @provider.new_resource.gid '23'
     end
 
+    describe "when changing the password" do
+      before { @provider.new_resource.password 'hocus-pocus' }
+
+      it "should set usermod -p" do
+        @provider.universal_options.should =~ / -p 'hocus-pocus'/
+      end
+      
+      it "should raise an exception if the platform is Solaris" do
+        @provider = Chef::Provider::User::Solaris.new(@new_resource, @run_context)
+        lambda {
+          @provider.universal_options
+        }.should raise_error(Chef::Exceptions::User, "Setting the password from the User resource is not supported on Solaris-based platforms.")
+      end
+    end
+    
     it "runs usermod with the computed command options" do
       @provider.should_receive(:run_command).with({ :command => "usermod -g '23' -d '/Users/mud' adam -m" }).and_return(true)
       @provider.manage_user
