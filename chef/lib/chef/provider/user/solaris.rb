@@ -16,18 +16,60 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# TODO - check this is available
+require "shadow"
+
 class Chef
   class Provider
     class User
       class Solaris < Chef::Provider::User::Useradd
-        def password_option
-          if @new_resource.password
-            write_shadow_file(@new_resource.password)
-            ""
-          end
+        attr_writer :password_file
+
+        def initialize(new_resource, run_context)
+          @password_file = "/etc/shadow"
+          super
         end
 
-        def write_shadow_file(new_password)
+        def password_option
+          if @current_resource.password != @new_resource.password && @new_resource.password
+            Chef::Log.debug("#{@new_resource} setting password to #{@new_resource.password}")
+            write_shadow_file
+          end
+          ""
+        end
+
+        def write_shadow_file
+          buffer = Tempfile.new("shadow")
+          ::File.open(@password_file, ::File::RDWR|::File::CREAT) do |shadow_file|
+            shadow_file.each do |entry|
+              user = entry.split(":").first
+              if user == @new_resource.username
+                buffer.write(updated_password(entry))
+              else
+                buffer.write(entry)
+              end
+            end
+          end
+          buffer.rewind
+          make_it_real(buffer)
+        end
+
+      private
+
+        def updated_password(entry)
+          fields = entry.split(":")
+          fields[1] = @new_resource.password
+          fields[2] = days_since_epoch
+          fields.join(":") + "\n"
+        end
+
+        def make_it_real(buffer)
+          FileUtils.link buffer.path, @password_file, :force => true
+          buffer.unlink
+        end
+
+        def days_since_epoch
+          (Time.now.to_i / 86400).floor
         end
       end
     end

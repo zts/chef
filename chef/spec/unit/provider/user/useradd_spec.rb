@@ -111,9 +111,21 @@ describe Chef::Provider::User::Useradd do
         end
 
         it "should use its own shadow file writer to set the password" do
-          Chef::Provider::User::Solaris.any_instance.should_receive(:write_shadow_file).with("hocus-pocus")
+          Chef::Provider::User::Solaris.any_instance.should_receive(:write_shadow_file)
           @provider.stub!(:run_command).and_return(true)
           @provider.manage_user
+        end
+
+        it "should write out a modified version of the password file" do
+          password_file = Tempfile.new("shadow")
+          password_file.puts "adam:existingpassword:15441::::::"
+          password_file.flush
+          @provider.password_file = password_file.path
+          @provider.stub!(:run_command).and_return(true)
+          @new_resource.password "verysecurepassword"
+          @provider.manage_user
+          ::File.open(password_file.path, "r").read.should =~ /adam:verysecurepassword:/
+          password_file.unlink
         end
       end
     end
