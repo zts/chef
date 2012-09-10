@@ -67,7 +67,7 @@ class Chef
       def diff_current(temp_path)
         suppress_resource_reporting = false
 
-        return [ "(diff output suppressed by config)" ] if Chef::Config[:diff_disabled]
+        return [ "(diff output suppressed by config)" ] unless Chef::Config[:reporting_diff_enabled]
         return [ "(no temp file with new content, diff output suppressed)" ] unless ::File.exists?(temp_path)  # should never happen?
 
         # solaris does not support diff -N, so create tempfile to diff against if we are creating a new file
@@ -79,8 +79,8 @@ class Chef
                         tempfile.path
                       end
 
-        diff_filesize_threshold = Chef::Config[:diff_filesize_threshold]
-        diff_output_threshold = Chef::Config[:diff_output_threshold]
+        diff_filesize_threshold = Chef::Config[:reporting_diff_filesize_threshold]
+        diff_output_threshold = Chef::Config[:reporting_diff_output_threshold]
 
         if ::File.size(target_path) > diff_filesize_threshold || ::File.size(temp_path) > diff_filesize_threshold
           return [ "(file sizes exceed #{diff_filesize_threshold} bytes, diff output suppressed)" ]

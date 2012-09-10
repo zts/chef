@@ -320,7 +320,7 @@ describe Chef::Provider::File do
     end
 
     it "should not return diff output when chef config has disabled it" do
-      Chef::Config[:diff_disabled] = true
+      Chef::Config[:reporting_diff_enabled] = false
       Tempfile.open("some-temp") do |file|
         @resource.path(file.path)
         @provider = Chef::Provider::File.new(@resource, @run_context)
@@ -361,7 +361,7 @@ describe Chef::Provider::File do
     end
 
     it "should not produce a diff when the current resource file is above the filesize threshold" do
-      Chef::Config[:diff_filesize_threshold] = 5
+      Chef::Config[:reporting_diff_filesize_threshold] = 5
       Tempfile.open("some-temp") do |file|
         @resource.path(file.path)
         file.puts("this is a line which is longer than 5 characters")
@@ -375,7 +375,7 @@ describe Chef::Provider::File do
     end
 
     it "should not produce a diff when the new content is above the filesize threshold" do
-      Chef::Config[:diff_filesize_threshold] = 5
+      Chef::Config[:reporting_diff_filesize_threshold] = 5
       Tempfile.open("some-temp") do |file|
         @resource.path(file.path)
         file.puts("foo")
@@ -389,7 +389,7 @@ describe Chef::Provider::File do
     end
 
     it "should not produce a diff when the generated diff size is above the diff size threshold" do
-      Chef::Config[:diff_output_threshold] = 5
+      Chef::Config[:reporting_diff_output_threshold] = 5
       Tempfile.open("some-temp") do |file|
         @resource.path(file.path)
         file.puts("some text to increase the size of the diff")

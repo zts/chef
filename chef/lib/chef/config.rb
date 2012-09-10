@@ -177,9 +177,11 @@ class Chef
     verbose_logging true
     node_name nil
     node_path "/var/chef/node"
-    diff_disable            false
-    diff_filesize_threshold 10000000
-    diff_output_threshold   1000000
+
+    reporting_enabled                 false
+    reporting_diff_enabled            true
+    reporting_diff_filesize_threshold 10000000
+    reporting_diff_output_threshold   1000000
 
     pid_file nil
 
@@ -200,7 +202,6 @@ class Chef
     why_run false
     color false
     client_fork false
-    disable_reporting true
     
     # Set these to enable SSL authentication / mutual-authentication
     # with the server

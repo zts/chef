@@ -86,11 +86,7 @@ class Chef
     attr_reader :error_descriptions
 
     def initialize(rest_client)
-      if Chef::Config[:disable_reporting]
-        @reporting_enabled = false
-      else
-        @reporting_enabled = true
-      end
+      @reporting_enabled = Chef::Config[:reporting_enabled]
       @updated_resources = []
       @total_res_count = 0
       @pending_update  = nil
