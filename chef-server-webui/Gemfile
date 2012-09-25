@@ -9,8 +9,8 @@ gem "haml-rails"
 gem "ruby-openid"
 gem "coderay"
 
-gem "chef", ChefServerWebui::VERSION, :git => "git://github.com/opscode/chef.git", :require => false # load individual parts as needed
-gem "chef-solr", ChefServerWebui::VERSION, :git => "git://github.com/opscode/chef.git", :require => false
+gem "chef", ChefServerWebui::VERSION, :git => "git://github.com/opscode/chef.git", :require => false, :branch => "erchef-webui"
+gem "chef-solr", ChefServerWebui::VERSION, :git => "git://github.com/opscode/chef.git", :require => false, :branch => "erchef-webui"
 
 group(:development) do
   gem 'thin'
