@@ -499,4 +499,51 @@ EOM
       expect(result.exitstatus).not_to eq(0)
     end
   end
+
+  when_the_repository "has a databag" do
+    before do
+      file "data_bags/x/y.json", <<EOM
+{
+    "name"       :"data_bag_item_x_y",
+    "id"         :"y",
+    "json_class" :"Chef::DataBagItem",
+    "chef_type"  :"data_bag_item",
+    "data_bag"   :"x",
+    "raw_data"   : { "id": "y", "foo": "bar" }
+}
+EOM
+    file "cookbooks/x/metadata.rb", cb_metadata("x", "1.0.0")
+    file "config/client.rb", <<EOM
+local_mode true
+cookbook_path "#{path_to('cookbooks')}"
+data_bag_path "#{path_to('data_bags')}"
+EOM
+    end
+
+    it "should complete with success when item key is a symbol" do
+      file "cookbooks/x/recipes/default.rb", <<'EOM'
+dbi = data_bag_item('x', 'y')
+raise if dbi[:foo].nil?
+puts "ITEM key :foo has value #{dbi[:foo]}"
+EOM
+
+      result = shell_out!("#{chef_client} -c \"#{path_to('config/client.rb')}\" -o 'x::default'", :cwd => chef_dir)
+      result.error!
+      expect(result.stdout).to include("ITEM key :foo has value bar")
+    end
+
+    it "should complete with success when item key is a string" do
+      file "cookbooks/x/recipes/default.rb", <<'EOM'
+dbi = data_bag_item('x', 'y')
+raise if dbi['foo'].nil?
+puts "ITEM key 'foo' has value #{dbi['foo']}"
+EOM
+
+      result = shell_out!("#{chef_client} -c \"#{path_to('config/client.rb')}\" -o 'x::default'", :cwd => chef_dir)
+      result.error!
+      expect(result.stdout).to include("ITEM key 'foo' has value bar")
+    end
+
+  end
+
 end
