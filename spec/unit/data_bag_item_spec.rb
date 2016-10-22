@@ -143,6 +143,16 @@ describe Chef::DataBagItem do
       expect(data_bag_item["id"]).to eq("journey")
     end
 
+    it "string keys return values" do
+      expect(data_bag_item['id']).to eq('journey')
+      expect(data_bag_item['trials']).to eq('been through')
+    end
+
+    it "symbolic keys do not return values" do
+      expect(data_bag_item[:id]).to be_nil
+      expect(data_bag_item[:trials]).to be_nil
+    end
+
     it "implements all the methods of Hash" do
       methods = [:rehash, :to_hash, :[], :fetch, :[]=, :store, :default,
       :default=, :default_proc, :index, :size, :length,
